@@ -32,6 +32,7 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
   const [sensorData, setSensorData] = useState<any>(null);
   const [is3DMode, setIs3DMode] = useState(false);
   const [photoTexture, setPhotoTexture] = useState<THREE.Texture | null>(null);
+  const [materialRef, setMaterialRef] = useState<THREE.MeshBasicMaterial | null>(null);
   
   // Debug: Log da foto recebida
   useEffect(() => {
@@ -42,6 +43,50 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
       timestamp: photo.timestamp
     });
   }, [photo]);
+
+  // Recarregar textura quando entrar nos modos 3D ou AR
+  useEffect(() => {
+    if ((isARActive || is3DMode) && materialRef && !photoTexture) {
+      console.log('🔄 Recarregando textura para modo 3D/AR');
+      loadPhotoTexture();
+    }
+  }, [isARActive, is3DMode, materialRef, photoTexture]);
+
+  // Função para carregar textura da foto
+  const loadPhotoTexture = () => {
+    if (!photo.uri) return null;
+    
+    const loader = new THREE.TextureLoader();
+    loader.crossOrigin = 'anonymous';
+    
+    return loader.load(
+      photo.uri,
+      (loadedTexture) => {
+        console.log('✅ Textura carregada com sucesso:', photo.uri);
+        loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
+        loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
+        loadedTexture.minFilter = THREE.LinearFilter;
+        loadedTexture.magFilter = THREE.LinearFilter;
+        loadedTexture.flipY = false; // Importante para texturas de foto
+        
+        setPhotoTexture(loadedTexture);
+        
+        // Atualizar material existente
+        if (materialRef) {
+          materialRef.map = loadedTexture;
+          materialRef.needsUpdate = true;
+          console.log('🔄 Material atualizado com nova textura');
+        }
+      },
+      (progress) => {
+        console.log('⏳ Carregando textura...', progress);
+      },
+      (error) => {
+        console.error('❌ Erro ao carregar textura:', error);
+        console.log('📍 URI da foto:', photo.uri);
+      }
+    );
+  };
   
   const rendererRef = useRef<any>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -124,66 +169,22 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
       // Criar geometria plana para a foto
       const geometry = new THREE.PlaneGeometry(3, 3);
       
-      // Carregar textura da foto
-      let material: THREE.MeshBasicMaterial;
+      // Criar material base
+      const material = new THREE.MeshBasicMaterial({
+        color: 0x6366f1, // Cor de fallback
+        transparent: true,
+        opacity: 0.9,
+        side: THREE.DoubleSide,
+      });
       
-      try {
-        // Tentar carregar a imagem real
-        if (photo.uri) {
-          const loader = new THREE.TextureLoader();
-          
-          // Configurar loader com headers para URIs locais
-          loader.crossOrigin = 'anonymous';
-          
-          const texture = loader.load(
-            photo.uri,
-            (loadedTexture) => {
-              console.log('Textura carregada com sucesso:', photo.uri);
-              loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
-              loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
-              loadedTexture.minFilter = THREE.LinearFilter;
-              loadedTexture.magFilter = THREE.LinearFilter;
-              setPhotoTexture(loadedTexture);
-              
-              // Atualizar material se o mesh já existir
-              if (cubeRef.current && cubeRef.current.material) {
-                (cubeRef.current.material as THREE.MeshBasicMaterial).map = loadedTexture;
-                (cubeRef.current.material as THREE.MeshBasicMaterial).needsUpdate = true;
-              }
-            },
-            (progress) => {
-              console.log('Carregando textura...', progress);
-            },
-            (error) => {
-              console.warn('Erro ao carregar textura:', error);
-              console.log('URI da foto:', photo.uri);
-            }
-          );
-          
-          material = new THREE.MeshBasicMaterial({
-            map: texture,
-            transparent: true,
-            opacity: 0.8,
-            side: THREE.DoubleSide,
-          });
-        } else {
-          // Fallback para cor se não houver imagem
-          material = new THREE.MeshBasicMaterial({
-            color: 0x6366f1,
-            transparent: true,
-            opacity: 0.8,
-            side: THREE.DoubleSide,
-          });
-        }
-      } catch (error) {
-        console.warn('Erro ao criar material:', error);
-        // Fallback para cor
-        material = new THREE.MeshBasicMaterial({
-          color: 0x6366f1,
-          transparent: true,
-          opacity: 0.8,
-          side: THREE.DoubleSide,
-        });
+      // Armazenar referência do material
+      setMaterialRef(material);
+      
+      // Carregar textura da foto
+      const texture = loadPhotoTexture();
+      if (texture) {
+        material.map = texture;
+        console.log('🖼️ Textura aplicada ao material');
       }
 
       // Criar mesh
@@ -230,9 +231,11 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
       }
     }
 
-    setIsARActive(!isARActive);
+    const newARMode = !isARActive;
+    console.log('🥽 Alterando para modo AR:', newARMode);
+    setIsARActive(newARMode);
     
-    if (!isARActive) {
+    if (newARMode) {
       Alert.alert(
         'Modo AR Ativado',
         'A câmera será ativada e objetos 3D serão sobrepostos usando sensores do dispositivo.',
@@ -242,7 +245,9 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
   };
 
   const toggle3DMode = () => {
-    setIs3DMode(!is3DMode);
+    const newMode = !is3DMode;
+    console.log('🎮 Alterando para modo 3D:', newMode);
+    setIs3DMode(newMode);
     setIsARActive(false); // Desativar AR ao entrar no modo 3D
   };
 
@@ -302,7 +307,14 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
         <GLView
           style={[
             styles.glView,
-            { backgroundColor: isARActive ? 'transparent' : '#000000' }
+            { 
+              backgroundColor: isARActive ? 'transparent' : '#000000',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }
           ]}
           onContextCreate={onContextCreate}
         />
