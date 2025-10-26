@@ -107,51 +107,30 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
     console.log('🎨 Criando textura de fallback...');
     
     try {
-      // Criar uma textura canvas simples para fallback
-      const canvas = document.createElement ? document.createElement('canvas') : null;
+      // Para React Native/Expo, usar textura de dados diretamente
+      // pois canvas pode não estar disponível ou ter APIs limitadas
+      console.log('🟢 Criando textura de dados para React Native/Expo');
       
-      if (canvas) {
-        // Ambiente web
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          canvas.width = 512;
-          canvas.height = 512;
-          
-          // Gradiente de fundo
-          const gradient = ctx.createLinearGradient(0, 0, 512, 512);
-          gradient.addColorStop(0, '#6366f1');
-          gradient.addColorStop(1, '#8b5cf6');
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, 512, 512);
-          
-          // Texto
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 48px Arial';
-          ctx.textAlign = 'center';
-          ctx.fillText('FOTO', 256, 256);
-          ctx.font = '24px Arial';
-          ctx.fillText(photo.name, 256, 300);
-          
-          const texture = new THREE.CanvasTexture(canvas);
-          texture.wrapS = THREE.ClampToEdgeWrapping;
-          texture.wrapT = THREE.ClampToEdgeWrapping;
-          
-          setPhotoTexture(texture);
-          
-          if (materialRef) {
-            materialRef.map = texture;
-            materialRef.needsUpdate = true;
-            console.log('✅ Fallback aplicado ao material');
-          }
-          
-          return texture;
-        }
+      // Criar uma textura colorida simples (cor azul-violeta)
+      const size = 64; // Menor para performance
+      const data = new Uint8Array(size * size * 4);
+      
+      // Preencher com cor azul-violeta (#6366f1)
+      for (let i = 0; i < size * size; i++) {
+        const offset = i * 4;
+        data[offset] = 99;      // R
+        data[offset + 1] = 102; // G
+        data[offset + 2] = 241; // B
+        data[offset + 3] = 255; // A
       }
       
-      // Se não conseguir criar canvas, criar textura de dados simples
-      console.log('🟢 Criando textura de dados como fallback final');
-      const data = new Uint8Array([99, 102, 241, 255]); // Cor azul
-      const texture = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat);
+      const texture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+      texture.wrapS = THREE.ClampToEdgeWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      texture.minFilter = THREE.NearestFilter; // Usar NearestFilter para evitar avisos EXGL
+      texture.magFilter = THREE.NearestFilter; // Usar NearestFilter para evitar avisos EXGL
+      texture.generateMipmaps = false; // Desabilitar mipmaps para Expo GL
+      texture.flipY = false; // Configuração específica para Expo GL
       texture.needsUpdate = true;
       
       setPhotoTexture(texture);
@@ -159,6 +138,7 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
       if (materialRef) {
         materialRef.map = texture;
         materialRef.needsUpdate = true;
+        console.log('✅ Fallback aplicado ao material');
       }
       
       return texture;

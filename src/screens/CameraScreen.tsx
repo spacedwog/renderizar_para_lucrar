@@ -30,7 +30,7 @@ const CameraScreen = () => {
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'Images', // String correta para v17
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,
@@ -53,7 +53,7 @@ const CameraScreen = () => {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'Images', // String correta para v17
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,

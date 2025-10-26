@@ -4,6 +4,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import {StyleSheet} from 'react-native';
 import {StatusBar} from 'expo-status-bar';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 // Import screens
 import HomeScreen from './screens/HomeScreen';
@@ -23,9 +24,10 @@ const App = () => {
   }, []);
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <StatusBar style="dark" backgroundColor="#ffffff" />
-      <NavigationContainer>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={styles.container}>
+        <StatusBar style="dark" backgroundColor="#ffffff" />
+        <NavigationContainer>
         <Stack.Navigator
           initialRouteName="Home"
           screenOptions={{
@@ -63,8 +65,9 @@ const App = () => {
             options={{title: 'Banco de Dados'}}
           />
         </Stack.Navigator>
-      </NavigationContainer>
-    </GestureHandlerRootView>
+        </NavigationContainer>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 };
 
