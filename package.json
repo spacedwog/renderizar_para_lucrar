@@ -1,0 +1,59 @@
+{
+  "name": "renderizar-para-lucrar",
+  "version": "1.0.0",
+  "description": "React Native app for AR photo rendering with SQLite3 database",
+  "main": "index.js",
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "test": "jest",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "build:android": "cd android && ./gradlew assembleRelease",
+    "build:ios": "react-native run-ios --configuration Release",
+    "clean": "react-native clean",
+    "git:setup": "git init && git add . && git commit -m 'Initial commit'",
+    "git:feature": "git checkout -b feature/",
+    "git:commit": "git add . && git commit",
+    "git:push": "git push origin"
+  },
+  "dependencies": {
+    "react": "18.2.0",
+    "react-native": "0.72.6",
+    "react-native-sqlite-storage": "^6.0.1",
+    "react-native-fs": "^2.20.0",
+    "react-native-image-picker": "^7.0.3",
+    "react-native-vector-icons": "^10.0.0",
+    "react-native-permissions": "^3.10.1",
+    "react-native-ar": "^0.3.0",
+    "react-native-3d-model-view": "^1.1.0",
+    "react-native-canvas": "^0.1.38",
+    "react-native-webgl": "^0.11.0",
+    "@react-navigation/native": "^6.1.9",
+    "@react-navigation/stack": "^6.3.20",
+    "react-native-screens": "^3.27.0",
+    "react-native-safe-area-context": "^4.7.4",
+    "react-native-gesture-handler": "^2.13.4",
+    "react-native-reanimated": "^3.5.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@babel/preset-env": "^7.20.0",
+    "@babel/runtime": "^7.20.0",
+    "@react-native/eslint-config": "^0.72.2",
+    "@react-native/metro-config": "^0.72.11",
+    "@tsconfig/react-native": "^3.0.0",
+    "@types/react": "^18.0.24",
+    "@types/react-test-renderer": "^18.0.0",
+    "babel-jest": "^29.2.1",
+    "eslint": "^8.19.0",
+    "jest": "^29.2.1",
+    "metro-react-native-babel-preset": "0.76.8",
+    "prettier": "^2.4.1",
+    "react-test-renderer": "18.2.0",
+    "typescript": "4.8.4"
+  },
+  "jest": {
+    "preset": "react-native"
+  }
+}
