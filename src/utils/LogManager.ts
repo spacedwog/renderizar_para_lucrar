@@ -11,7 +11,7 @@ interface LogConfig {
 class LogManager {
   private static config: LogConfig = {
     enabled: __DEV__, // Apenas em desenvolvimento
-    level: 'info'
+    level: 'warn' // Apenas warnings e erros por padrão
   };
 
   static setConfig(config: Partial<LogConfig>) {
@@ -19,14 +19,19 @@ class LogManager {
   }
 
   static debug(message: string, ...args: any[]) {
-    if (this.config.enabled && this.shouldLog('debug')) {
-      console.log(`🔧 ${message}`, ...args);
-    }
+    // Debug logs desabilitados - muito verbosos
+    // Descomente a linha abaixo apenas para debugging profundo
+    // if (this.config.enabled && this.shouldLog('debug') && __DEV__) {
+    //   console.log(`🔧 ${message}`, ...args);
+    // }
   }
 
   static info(message: string, ...args: any[]) {
     if (this.config.enabled && this.shouldLog('info')) {
-      console.log(`ℹ️ ${message}`, ...args);
+      // Silencioso em produção - apenas em desenvolvimento
+      if (__DEV__) {
+        console.log(`ℹ️ ${message}`, ...args);
+      }
     }
   }
 
@@ -43,7 +48,8 @@ class LogManager {
   }
 
   static success(message: string, ...args: any[]) {
-    if (this.config.enabled) {
+    // Success logs apenas para operações importantes
+    if (this.config.enabled && __DEV__) {
       console.log(`✅ ${message}`, ...args);
     }
   }

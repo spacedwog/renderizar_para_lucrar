@@ -16,6 +16,9 @@ import DatabaseScreen from './screens/DatabaseScreen';
 // Import database initialization
 import {initializeDatabase} from './database/DatabaseManager';
 
+// Import console filter para suprimir avisos conhecidos
+import './utils/ConsoleFilter';
+
 const Stack = createStackNavigator();
 
 const App = () => {
