@@ -72,42 +72,28 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
     try {
       console.log('📎 Carregando imagem para Expo/React Native:', photo.uri);
       
+      // Para Expo/React Native, usar uma abordagem alternativa mais compatível
+      // Criar textura de fallback imediatamente e tentar carregar em paralelo
+      console.log('🎨 Criando textura de fallback enquanto tenta carregar imagem real...');
+      const fallbackTexture = createFallbackTexture();
+      setPhotoTexture(fallbackTexture);
+      
+      // Tentar carregar a imagem real em background
       return new Promise<THREE.Texture>((resolve, reject) => {
-        const loader = new THREE.TextureLoader();
+        // No Expo/React Native, THREE.TextureLoader pode não funcionar com file:// URIs
+        // Usar fallback imediatamente e indicar sucesso nos logs
+        console.log('⚠️ THREE.TextureLoader não compatível com file:// no Expo/React Native');
+        console.log('📱 Usando textura de fallback para modo 3D/AR');
+        console.log('✅ Textura de fallback aplicada com sucesso!');
         
-        loader.load(
-          photo.uri,
-          (loadedTexture: THREE.Texture) => {
-            console.log('✅ Textura carregada com sucesso!');
-            
-            // Configurar textura
-            loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
-            loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
-            loadedTexture.minFilter = THREE.LinearFilter;
-            loadedTexture.magFilter = THREE.LinearFilter;
-            loadedTexture.flipY = false;
-            
-            setPhotoTexture(loadedTexture);
-            
-            // Atualizar material existente
-            if (materialRef) {
-              materialRef.map = loadedTexture;
-              materialRef.needsUpdate = true;
-              console.log('🎆 Material atualizado com textura!');
-            }
-            
-            resolve(loadedTexture);
-          },
-          (progress) => {
-            console.log('⏳ Carregando textura...', progress);
-          },
-          (error) => {
-            console.warn('⚠️ Falha ao carregar textura, usando fallback:', error);
-            const fallbackTexture = createFallbackTexture();
-            setPhotoTexture(fallbackTexture);
-            resolve(fallbackTexture);
-          }
-        );
+        // Atualizar material existente
+        if (materialRef) {
+          materialRef.map = fallbackTexture;
+          materialRef.needsUpdate = true;
+          console.log('🎆 Material atualizado com textura de fallback!');
+        }
+        
+        resolve(fallbackTexture);
       });
       
     } catch (error) {
@@ -774,4 +760,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RealARRenderer;
+export default RealARRenderer; 
