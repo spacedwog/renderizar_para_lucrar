@@ -189,6 +189,9 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# Expo
+.expo/
+
 # SQLite databases
 *.db
 *.sqlite

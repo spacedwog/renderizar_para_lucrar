@@ -4,7 +4,6 @@
     "slug": "renderizar-para-lucrar",
     "version": "1.0.0",
     "orientation": "portrait",
-    "main": "./App.js",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
