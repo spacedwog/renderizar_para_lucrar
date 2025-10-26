@@ -426,13 +426,22 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
             }}
           />
           
-          {/* Debug info */}
-          <View style={styles.debugContainer}>
-            <Text style={styles.debugText}>Modo: 2D</Text>
-            <Text style={styles.debugText}>Foto: {photo.name}</Text>
-            <Text style={styles.debugText} numberOfLines={2}>
-              URI: {photo.uri.substring(0, 50)}...
-            </Text>
+          {/* Informações centralizadas da foto */}
+          <View style={styles.photoInfoOverlay}>
+            <View style={styles.photoInfoContainer}>
+              <Text style={styles.photoTitle}>📸 Visualização 2D</Text>
+              <Text style={styles.photoName}>{photo.name}</Text>
+              <Text style={styles.photoTimestamp}>
+                📅 {new Date(photo.timestamp).toLocaleString('pt-BR')}
+              </Text>
+              <Text style={styles.photoId}>ID: #{photo.id}</Text>
+              
+              {/* Indicador de modo */}
+              <View style={styles.modeIndicator}>
+                <View style={[styles.modeIcon, { backgroundColor: '#10b981' }]} />
+                <Text style={styles.modeText}>Modo 2D Ativo</Text>
+              </View>
+            </View>
           </View>
         </View>
       )}
@@ -576,6 +585,75 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     height: height * 0.6,
     borderRadius: 12,
+  },
+  photoInfoOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  photoInfoContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    minWidth: width * 0.7,
+  },
+  photoTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  photoName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  photoTimestamp: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  photoId: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginBottom: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  modeIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#10b981',
+  },
+  modeIcon: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  modeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#10b981',
   },
   debugContainer: {
     position: 'absolute',
