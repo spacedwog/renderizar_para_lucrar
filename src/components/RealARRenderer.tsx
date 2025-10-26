@@ -62,24 +62,23 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
     }
   }, [photo.uri, materialRef]);
 
-  // Função para carregar textura da foto com fallback
-  const loadPhotoTexture = async () => {
+  // Função para carregar textura no Expo usando GLView
+  const loadPhotoTexture = async (): Promise<THREE.Texture | null> => {
     if (!photo.uri) {
       console.warn('⚠️ URI da foto não encontrada');
       return null;
     }
     
     try {
-      console.log('📎 Tentando carregar imagem:', photo.uri);
+      console.log('📎 Carregando imagem para Expo/React Native:', photo.uri);
       
-      // Método 1: Tentar carregar via THREE.TextureLoader (funciona melhor para web)
-      const loader = new THREE.TextureLoader();
-      
-      return new Promise((resolve, reject) => {
+      return new Promise<THREE.Texture>((resolve, reject) => {
+        const loader = new THREE.TextureLoader();
+        
         loader.load(
           photo.uri,
-          (loadedTexture) => {
-            console.log('✅ Textura THREE.js carregada:', photo.uri);
+          (loadedTexture: THREE.Texture) => {
+            console.log('✅ Textura carregada com sucesso!');
             
             // Configurar textura
             loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
@@ -94,28 +93,97 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
             if (materialRef) {
               materialRef.map = loadedTexture;
               materialRef.needsUpdate = true;
-              console.log('🔄 Material atualizado com textura THREE.js');
+              console.log('🎆 Material atualizado com textura!');
             }
             
             resolve(loadedTexture);
           },
           (progress) => {
-            console.log('⏳ Progresso do carregamento:', progress);
+            console.log('⏳ Carregando textura...', progress);
           },
           (error) => {
-            console.warn('⚠️ Falha no THREE.TextureLoader, tentando método alternativo:', error);
-            
-            // Método 2: Fallback usando canvas (melhor para mobile/Expo)
-            loadTextureViaCanvas()
-              .then(resolve)
-              .catch(reject);
+            console.warn('⚠️ Falha ao carregar textura, usando fallback:', error);
+            const fallbackTexture = createFallbackTexture();
+            setPhotoTexture(fallbackTexture);
+            resolve(fallbackTexture);
           }
         );
       });
       
     } catch (error) {
-      console.error('❌ Erro geral no carregamento de textura:', error);
-      return null;
+      console.error('❌ Erro na função loadPhotoTexture:', error);
+      return createFallbackTexture();
+    }
+  };
+  
+  // Criar textura de fallback com cor e texto
+  const createFallbackTexture = (): THREE.Texture => {
+    console.log('🎨 Criando textura de fallback...');
+    
+    try {
+      // Criar uma textura canvas simples para fallback
+      const canvas = document.createElement ? document.createElement('canvas') : null;
+      
+      if (canvas) {
+        // Ambiente web
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          canvas.width = 512;
+          canvas.height = 512;
+          
+          // Gradiente de fundo
+          const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+          gradient.addColorStop(0, '#6366f1');
+          gradient.addColorStop(1, '#8b5cf6');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, 512, 512);
+          
+          // Texto
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 48px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('FOTO', 256, 256);
+          ctx.font = '24px Arial';
+          ctx.fillText(photo.name, 256, 300);
+          
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.wrapS = THREE.ClampToEdgeWrapping;
+          texture.wrapT = THREE.ClampToEdgeWrapping;
+          
+          setPhotoTexture(texture);
+          
+          if (materialRef) {
+            materialRef.map = texture;
+            materialRef.needsUpdate = true;
+            console.log('✅ Fallback aplicado ao material');
+          }
+          
+          return texture;
+        }
+      }
+      
+      // Se não conseguir criar canvas, criar textura de dados simples
+      console.log('🟢 Criando textura de dados como fallback final');
+      const data = new Uint8Array([99, 102, 241, 255]); // Cor azul
+      const texture = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat);
+      texture.needsUpdate = true;
+      
+      setPhotoTexture(texture);
+      
+      if (materialRef) {
+        materialRef.map = texture;
+        materialRef.needsUpdate = true;
+      }
+      
+      return texture;
+      
+    } catch (error) {
+      console.error('❌ Erro ao criar fallback:', error);
+      // Mesmo em caso de erro, retornar uma textura básica
+      const data = new Uint8Array([255, 0, 0, 255]); // Cor vermelha para indicar erro
+      const errorTexture = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat);
+      errorTexture.needsUpdate = true;
+      return errorTexture;
     }
   };
   
