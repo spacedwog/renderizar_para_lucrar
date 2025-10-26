@@ -1,14 +1,7 @@
-import SQLite from 'react-native-sqlite-storage';
-import RNFS from 'react-native-fs';
-
-// Configuração do SQLite
-SQLite.DEBUG(true);
-SQLite.enablePromise(true);
+import * as SQLite from 'expo-sqlite';
+import * as FileSystem from 'expo-file-system';
 
 const DATABASE_NAME = 'RenderizarParaLucrarDB.db';
-const DATABASE_VERSION = '1.0';
-const DATABASE_DISPLAYNAME = 'Renderizar Para Lucrar Database';
-const DATABASE_SIZE = 200000;
 
 let database: SQLite.SQLiteDatabase;
 
@@ -110,21 +103,16 @@ export const initializeDatabase = async (): Promise<void> => {
   try {
     console.log('Inicializando banco de dados...');
     
-    database = await SQLite.openDatabase({
-      name: DATABASE_NAME,
-      version: DATABASE_VERSION,
-      displayName: DATABASE_DISPLAYNAME,
-      size: DATABASE_SIZE,
-    });
+    database = await SQLite.openDatabaseAsync(DATABASE_NAME);
 
     console.log('Banco de dados aberto com sucesso');
 
     // Executar criação de tabelas
-    await database.executeSql(createTablesSQL);
+    await database.execAsync(createTablesSQL);
     console.log('Tabelas criadas com sucesso');
 
     // Inserir dados iniciais
-    await database.executeSql(insertInitialDataSQL);
+    await database.execAsync(insertInitialDataSQL);
     console.log('Dados iniciais inseridos');
 
     console.log('Banco de dados inicializado com sucesso');
@@ -136,7 +124,7 @@ export const initializeDatabase = async (): Promise<void> => {
 
 export const closeDatabase = async (): Promise<void> => {
   if (database) {
-    await database.close();
+    await database.closeAsync();
     console.log('Banco de dados fechado');
   }
 };
@@ -154,30 +142,32 @@ export const getDatabaseStats = async () => {
     const db = getDatabase();
     
     // Total de fotos
-    const photosResult = await db.executeSql('SELECT COUNT(*) as count FROM photos');
-    const totalPhotos = photosResult[0].rows.item(0).count;
+    const photosResult = await db.getFirstAsync('SELECT COUNT(*) as count FROM photos') as any;
+    const totalPhotos = photosResult?.count || 0;
 
     // Fotos renderizadas (que têm pelo menos uma renderização AR)
-    const renderedResult = await db.executeSql(
+    const renderedResult = await db.getFirstAsync(
       'SELECT COUNT(DISTINCT photo_id) as count FROM ar_renders'
-    );
-    const renderedPhotos = renderedResult[0].rows.item(0).count;
+    ) as any;
+    const renderedPhotos = renderedResult?.count || 0;
 
     // Total de usuários
-    const usersResult = await db.executeSql('SELECT COUNT(*) as count FROM users');
-    const totalUsers = usersResult[0].rows.item(0).count;
+    const usersResult = await db.getFirstAsync('SELECT COUNT(*) as count FROM users') as any;
+    const totalUsers = usersResult?.count || 0;
 
     // Total de sessões AR
-    const sessionsResult = await db.executeSql('SELECT COUNT(*) as count FROM ar_sessions');
-    const totalSessions = sessionsResult[0].rows.item(0).count;
+    const sessionsResult = await db.getFirstAsync('SELECT COUNT(*) as count FROM ar_sessions') as any;
+    const totalSessions = sessionsResult?.count || 0;
 
     // Tamanho do banco (estimativa)
     let databaseSize = '0 KB';
     try {
-      const dbPath = `${RNFS.DocumentDirectoryPath}/${DATABASE_NAME}`;
-      const stats = await RNFS.stat(dbPath);
-      const sizeInKB = Math.round(stats.size / 1024);
-      databaseSize = `${sizeInKB} KB`;
+      const dbPath = `${FileSystem.documentDirectory}SQLite/${DATABASE_NAME}`;
+      const stats = await FileSystem.getInfoAsync(dbPath);
+      if (stats.exists && stats.size) {
+        const sizeInKB = Math.round(stats.size / 1024);
+        databaseSize = `${sizeInKB} KB`;
+      }
     } catch (error) {
       console.log('Não foi possível obter o tamanho do banco:', error);
     }
@@ -200,17 +190,17 @@ export const clearAllData = async (): Promise<void> => {
   try {
     const db = getDatabase();
     
-    await db.transaction(async (tx: any) => {
-      await tx.executeSql('DELETE FROM activity_logs');
-      await tx.executeSql('DELETE FROM ar_renders');
-      await tx.executeSql('DELETE FROM ar_sessions');
-      await tx.executeSql('DELETE FROM photo_tags');
-      await tx.executeSql('DELETE FROM photo_metadata');
-      await tx.executeSql('DELETE FROM photos');
-      await tx.executeSql('DELETE FROM users WHERE id != 1'); // Manter usuário padrão
+    await db.withTransactionAsync(async () => {
+      await db.runAsync('DELETE FROM activity_logs');
+      await db.runAsync('DELETE FROM ar_renders');
+      await db.runAsync('DELETE FROM ar_sessions');
+      await db.runAsync('DELETE FROM photo_tags');
+      await db.runAsync('DELETE FROM photo_metadata');
+      await db.runAsync('DELETE FROM photos');
+      await db.runAsync('DELETE FROM users WHERE id != 1'); // Manter usuário padrão
       
       // Reset auto-increment
-      await tx.executeSql('DELETE FROM sqlite_sequence');
+      await db.runAsync('DELETE FROM sqlite_sequence');
     });
 
     console.log('Todos os dados foram limpos');
@@ -223,11 +213,14 @@ export const clearAllData = async (): Promise<void> => {
 // Função para exportar banco de dados
 export const exportDatabase = async (): Promise<string> => {
   try {
-    const sourcePath = `${RNFS.DocumentDirectoryPath}/${DATABASE_NAME}`;
+    const sourcePath = `${FileSystem.documentDirectory}SQLite/${DATABASE_NAME}`;
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const exportPath = `${RNFS.DownloadDirectoryPath}/backup_${timestamp}.db`;
+    const exportPath = `${FileSystem.documentDirectory}backup_${timestamp}.db`;
     
-    await RNFS.copyFile(sourcePath, exportPath);
+    await FileSystem.copyAsync({
+      from: sourcePath,
+      to: exportPath
+    });
     console.log('Banco exportado para:', exportPath);
     
     return exportPath;
@@ -238,18 +231,20 @@ export const exportDatabase = async (): Promise<string> => {
 };
 
 // Função para importar banco de dados
-export const importDatabase = async (importPath?: string): Promise<void> => {
+export const importDatabase = async (): Promise<void> => {
   try {
     // Por enquanto, apenas simulamos a importação
-    // Em uma implementação real, você usaria um file picker
+    // Em uma implementação real, você usaria um file picker do Expo
     console.log('Funcionalidade de importação será implementada');
     
     // Exemplo de implementação:
-    // const sourcePath = importPath || await selectFile();
-    // const targetPath = `${RNFS.DocumentDirectoryPath}/${DATABASE_NAME}`;
-    // await closeDatabase();
-    // await RNFS.copyFile(sourcePath, targetPath);
-    // await initializeDatabase();
+    // const result = await DocumentPicker.getDocumentAsync({ type: 'application/x-sqlite3' });
+    // if (result.type === 'success') {
+    //   const targetPath = `${FileSystem.documentDirectory}SQLite/${DATABASE_NAME}`;
+    //   await closeDatabase();
+    //   await FileSystem.copyAsync({ from: result.uri, to: targetPath });
+    //   await initializeDatabase();
+    // }
   } catch (error) {
     console.error('Erro ao importar banco:', error);
     throw error;
@@ -263,14 +258,8 @@ export const executeQuery = async (
 ): Promise<any[]> => {
   try {
     const db = getDatabase();
-    const result = await db.executeSql(query, params);
-    
-    const rows: any[] = [];
-    for (let i = 0; i < result[0].rows.length; i++) {
-      rows.push(result[0].rows.item(i));
-    }
-    
-    return rows;
+    const result = await db.getAllAsync(query, params);
+    return result;
   } catch (error) {
     console.error('Erro ao executar query:', error);
     throw error;
@@ -285,7 +274,7 @@ export const logActivity = async (
 ): Promise<void> => {
   try {
     const db = getDatabase();
-    await db.executeSql(
+    await db.runAsync(
       'INSERT INTO activity_logs (user_id, action_type, description) VALUES (?, ?, ?)',
       [userId, actionType, description]
     );
