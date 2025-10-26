@@ -9,7 +9,11 @@ import {
   Image,
   ScrollView,
 } from 'react-native';
-import {launchImageLibrary, launchCamera, MediaType} from 'react-native-image-picker';
+import {
+  launchImageLibrary,
+  launchCamera,
+  MediaType,
+} from 'react-native-image-picker';
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {PhotoModel} from '../models/PhotoModel';
@@ -27,13 +31,16 @@ const CameraScreen = () => {
   const handleTakePhoto = useCallback(async () => {
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) {
-      Alert.alert('Permissão negada', 'É necessário conceder permissão para usar a câmera');
+      Alert.alert(
+        'Permissão negada',
+        'É necessário conceder permissão para usar a câmera'
+      );
       return;
     }
 
     const options = {
       mediaType: 'photo' as MediaType,
-      quality: 0.8,
+      quality: 0.8 as any,
       includeBase64: false,
     };
 
@@ -49,10 +56,10 @@ const CameraScreen = () => {
     });
   }, [requestCameraPermission]);
 
-  const handleSelectFromGallery = useCallback(() => {
+  const openGallery = useCallback(() => {
     const options = {
       mediaType: 'photo' as MediaType,
-      quality: 0.8,
+      quality: 0.8 as any,
       includeBase64: false,
     };
 
@@ -90,16 +97,12 @@ const CameraScreen = () => {
       };
 
       await savePhoto(photo);
-      Alert.alert(
-        'Sucesso', 
-        'Foto salva com sucesso!',
-        [
-          {
-            text: 'OK',
-            onPress: () => setSelectedPhoto(null),
-          },
-        ]
-      );
+      Alert.alert('Sucesso', 'Foto salva com sucesso!', [
+        {
+          text: 'OK',
+          onPress: () => setSelectedPhoto(null),
+        },
+      ]);
     } catch (error) {
       Alert.alert('Erro', 'Falha ao salvar a foto');
       console.error('Erro ao salvar foto:', error);
@@ -147,7 +150,9 @@ const CameraScreen = () => {
           <View style={styles.cameraContainer}>
             <View style={styles.cameraPlaceholder}>
               <Icon name="photo-camera" size={64} color="#9ca3af" />
-              <Text style={styles.placeholderText}>Nenhuma foto selecionada</Text>
+              <Text style={styles.placeholderText}>
+                Nenhuma foto selecionada
+              </Text>
             </View>
           </View>
         )}
@@ -162,7 +167,7 @@ const CameraScreen = () => {
 
           <TouchableOpacity
             style={[styles.captureButton, styles.galleryButton]}
-            onPress={handleSelectFromGallery}>
+            onPress={openGallery}>
             <Icon name="photo-library" size={24} color="#ffffff" />
             <Text style={styles.captureButtonText}>Galeria</Text>
           </TouchableOpacity>

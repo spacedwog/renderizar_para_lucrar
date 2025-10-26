@@ -1,34 +1,43 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "lib": ["es2017"],
+    "lib": [
+      "es2017"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": false,
+    "strict": true,
     "noImplicitAny": false,
-    "suppressImplicitAnyIndexErrors": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-native",
     "declaration": false,
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     },
-    "typeRoots": ["node_modules/@types", "types"],
-    "types": ["react", "react-native"]
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "types": [
+      "react",
+      "react-native",
+      "jest"
+    ]
   },
   "include": [
     "src/**/*",
     "__tests__/**/*",
-    "index.js",
-    "types/**/*"
+    "index.js"
   ],
   "exclude": [
     "node_modules",
