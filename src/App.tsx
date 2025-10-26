@@ -16,7 +16,7 @@ import {initializeDatabase} from './database/DatabaseManager';
 
 const Stack = createStackNavigator();
 
-const App: React.FC = () => {
+const App = () => {
   useEffect(() => {
     initializeDatabase();
   }, []);

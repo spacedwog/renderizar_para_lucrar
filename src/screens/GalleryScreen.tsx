@@ -18,7 +18,7 @@ import {getAllPhotos, deletePhoto} from '../database/PhotoRepository';
 const {width} = Dimensions.get('window');
 const ITEM_WIDTH = (width - 60) / 2;
 
-const GalleryScreen: React.FC = () => {
+const GalleryScreen = () => {
   const [photos, setPhotos] = useState<PhotoModel[]>([]);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoModel | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -62,7 +62,7 @@ const GalleryScreen: React.FC = () => {
           onPress: async () => {
             try {
               await deletePhoto(photo.id);
-              setPhotos(prev => prev.filter(p => p.id !== photo.id));
+              setPhotos((prev: PhotoModel[]) => prev.filter((p: PhotoModel) => p.id !== photo.id));
               handleCloseModal();
               Alert.alert('Sucesso', 'Foto excluída com sucesso');
             } catch (error) {
@@ -191,7 +191,7 @@ const GalleryScreen: React.FC = () => {
         <FlatList
           data={photos}
           renderItem={renderPhotoItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item: PhotoModel) => item.id.toString()}
           numColumns={2}
           contentContainerStyle={styles.listContainer}
           columnWrapperStyle={styles.row}

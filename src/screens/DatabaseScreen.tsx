@@ -19,12 +19,11 @@ import {
 interface DatabaseStats {
   totalPhotos: number;
   renderedPhotos: number;
-  totalUsers: number;
   totalSessions: number;
   databaseSize: string;
 }
 
-const DatabaseScreen: React.FC = () => {
+const DatabaseScreen = () => {
   const [stats, setStats] = useState<DatabaseStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -110,7 +109,7 @@ const DatabaseScreen: React.FC = () => {
     value: string | number;
     icon: string;
     color: string;
-  }> = ({title, value, icon, color}) => (
+  }> = ({title, value, icon, color}: {title: string; value: string | number; icon: string; color: string}) => (
     <View style={[styles.statCard, {borderLeftColor: color}]}>
       <View style={[styles.statIcon, {backgroundColor: color}]}>
         <Icon name={icon} size={24} color="#ffffff" />
@@ -129,7 +128,14 @@ const DatabaseScreen: React.FC = () => {
     color: string;
     onPress: () => void;
     danger?: boolean;
-  }> = ({title, subtitle, icon, color, onPress, danger = false}) => (
+  }> = ({title, subtitle, icon, color, onPress, danger = false}: {
+    title: string;
+    subtitle: string;
+    icon: string;
+    color: string;
+    onPress: () => void;
+    danger?: boolean;
+  }) => (
     <TouchableOpacity
       style={[
         styles.actionButton,
@@ -185,7 +191,7 @@ const DatabaseScreen: React.FC = () => {
                 />
                 <StatCard
                   title="Usuários"
-                  value={stats?.totalUsers || 0}
+                  value={0}
                   icon="people"
                   color="#8b5cf6"
                 />

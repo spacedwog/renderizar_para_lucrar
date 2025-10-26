@@ -200,7 +200,7 @@ export const clearAllData = async (): Promise<void> => {
   try {
     const db = getDatabase();
     
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: any) => {
       await tx.executeSql('DELETE FROM activity_logs');
       await tx.executeSql('DELETE FROM ar_renders');
       await tx.executeSql('DELETE FROM ar_sessions');

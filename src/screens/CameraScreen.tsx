@@ -15,7 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {PhotoModel} from '../models/PhotoModel';
 import {savePhoto} from '../database/PhotoRepository';
 
-const CameraScreen: React.FC = () => {
+const CameraScreen = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,7 +37,7 @@ const CameraScreen: React.FC = () => {
       includeBase64: false,
     };
 
-    launchCamera(options, (response) => {
+    launchCamera(options, (response: any) => {
       if (response.didCancel || response.errorMessage) {
         return;
       }
@@ -56,7 +56,7 @@ const CameraScreen: React.FC = () => {
       includeBase64: false,
     };
 
-    launchImageLibrary(options, (response) => {
+    launchImageLibrary(options, (response: any) => {
       if (response.didCancel || response.errorMessage) {
         return;
       }

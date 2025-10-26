@@ -10,7 +10,7 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const HomeScreen: React.FC = () => {
+const HomeScreen = () => {
   const navigation = useNavigation<any>();
 
   const menuOptions = [

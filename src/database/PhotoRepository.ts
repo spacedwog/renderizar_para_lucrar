@@ -7,7 +7,7 @@ export const savePhoto = async (photo: PhotoModel): Promise<number> => {
   try {
     const db = getDatabase();
     
-    return await db.transaction(async (tx) => {
+    return await db.transaction(async (tx: any) => {
       // Inserir foto principal
       const photoResult = await tx.executeSql(
         'INSERT INTO photos (uri, name, timestamp) VALUES (?, ?, ?)',
@@ -135,7 +135,7 @@ export const deletePhoto = async (id: number): Promise<void> => {
   try {
     const db = getDatabase();
     
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: any) => {
       // Obter nome da foto para log
       const photoResult = await tx.executeSql('SELECT name FROM photos WHERE id = ?', [id]);
       const photoName = photoResult[0].rows.length > 0 ? photoResult[0].rows.item(0).name : 'Desconhecida';

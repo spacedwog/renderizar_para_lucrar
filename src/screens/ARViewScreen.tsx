@@ -16,7 +16,7 @@ import ARPhotoRenderer from '../components/ARPhotoRenderer';
 
 const {width, height} = Dimensions.get('window');
 
-const ARViewScreen: React.FC = () => {
+const ARViewScreen = () => {
   const [photos, setPhotos] = useState<PhotoModel[]>([]);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoModel | null>(null);
   const [isARActive, setIsARActive] = useState(false);
@@ -47,8 +47,8 @@ const ARViewScreen: React.FC = () => {
     if (selectedPhoto) {
       try {
         await updatePhotoARStatus(selectedPhoto.id, true);
-        setPhotos(prev => 
-          prev.map(photo => 
+        setPhotos((prev: PhotoModel[]) => 
+          prev.map((photo: PhotoModel) => 
             photo.id === selectedPhoto.id 
               ? {...photo, ar_rendered: true}
               : photo
@@ -128,7 +128,7 @@ const ARViewScreen: React.FC = () => {
         <FlatList
           data={photos}
           renderItem={renderPhotoItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item: PhotoModel) => item.id.toString()}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
         />

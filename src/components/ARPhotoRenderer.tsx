@@ -19,7 +19,7 @@ interface ARPhotoRendererProps {
   onClose: () => void;
 }
 
-const ARPhotoRenderer: React.FC<ARPhotoRendererProps> = ({photo, onClose}) => {
+const ARPhotoRenderer = ({photo, onClose}: ARPhotoRendererProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [renderMode, setRenderMode] = useState<'2D' | '3D' | 'AR'>('2D');
   const [rotationX, setRotationX] = useState(0);
@@ -74,7 +74,7 @@ const ARPhotoRenderer: React.FC<ARPhotoRendererProps> = ({photo, onClose}) => {
   // PanResponder para gestos de rotação
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: () => true,
-    onPanResponderMove: (evt, gestureState) => {
+    onPanResponderMove: (evt: any, gestureState: any) => {
       if (renderMode === '3D' || renderMode === 'AR') {
         const newRotationY = (gestureState.dx / width) * 360;
         const newRotationX = -(gestureState.dy / height) * 360;
