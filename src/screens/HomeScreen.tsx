@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {Ionicons} from '@expo/vector-icons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const HomeScreen = () => {
   const navigation = useNavigation<any>();
@@ -17,28 +17,28 @@ const HomeScreen = () => {
     {
       title: 'Capturar Foto',
       subtitle: 'Tire uma foto para renderização AR',
-      icon: 'camera' as keyof typeof Ionicons.glyphMap,
+      icon: 'camera-alt',
       onPress: () => navigation.navigate('Camera'),
       color: '#10b981',
     },
     {
       title: 'Visualização AR',
       subtitle: 'Visualize fotos em realidade aumentada',
-      icon: 'cube' as keyof typeof Ionicons.glyphMap,
+      icon: '3d-rotation',
       onPress: () => navigation.navigate('ARView'),
       color: '#8b5cf6',
     },
     {
       title: 'Galeria',
       subtitle: 'Visualize fotos capturadas',
-      icon: 'images' as keyof typeof Ionicons.glyphMap,
+      icon: 'photo-library',
       onPress: () => navigation.navigate('Gallery'),
       color: '#f59e0b',
     },
     {
       title: 'Banco de Dados',
       subtitle: 'Gerenciar dados SQLite3',
-      icon: 'server' as keyof typeof Ionicons.glyphMap,
+      icon: 'storage',
       onPress: () => navigation.navigate('Database'),
       color: '#ef4444',
     },
@@ -63,13 +63,13 @@ const HomeScreen = () => {
               activeOpacity={0.7}>
               <View style={styles.menuContent}>
                 <View style={[styles.iconContainer, {backgroundColor: option.color}]}>
-                  <Ionicons name={option.icon} size={24} color="#ffffff" />
+                  <Icon name={option.icon} size={24} color="#ffffff" />
                 </View>
                 <View style={styles.textContainer}>
                   <Text style={styles.menuTitle}>{option.title}</Text>
                   <Text style={styles.menuSubtitle}>{option.subtitle}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={24} color="#9ca3af" />
+                <Icon name="chevron-right" size={24} color="#9ca3af" />
               </View>
             </TouchableOpacity>
           ))}

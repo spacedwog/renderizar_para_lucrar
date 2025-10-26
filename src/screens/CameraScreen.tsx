@@ -36,7 +36,7 @@ const CameraScreen = () => {
       quality: 0.8,
     });
 
-    if (!result.canceled && result.assets[0]) {
+    if (!result.canceled && result.assets && result.assets[0]) {
       setSelectedPhoto(result.assets[0].uri);
     }
   }, []);
@@ -59,7 +59,7 @@ const CameraScreen = () => {
       quality: 0.8,
     });
 
-    if (!result.canceled && result.assets[0]) {
+    if (!result.canceled && result.assets && result.assets[0]) {
       setSelectedPhoto(result.assets[0].uri);
     }
   }, []);
