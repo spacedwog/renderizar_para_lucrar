@@ -12,7 +12,7 @@ import {
 import {Ionicons} from '@expo/vector-icons';
 import {PhotoModel} from '../models/PhotoModel';
 import {getAllPhotos, updatePhotoARStatus} from '../database/PhotoRepository';
-import ARPhotoRenderer from '../components/ARPhotoRenderer';
+import RealARRenderer from '../components/RealARRenderer';
 
 const {width, height} = Dimensions.get('window');
 
@@ -95,7 +95,7 @@ const ARViewScreen = () => {
 
   if (isARActive && selectedPhoto) {
     return (
-      <ARPhotoRenderer
+      <RealARRenderer
         photo={selectedPhoto}
         onClose={handleARClose}
       />

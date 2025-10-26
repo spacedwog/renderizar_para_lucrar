@@ -1,23 +1,22 @@
 import {PhotoModel, PhotoMetadata} from '../models/PhotoModel';
 import {getDatabase, logActivity} from './DatabaseManager';
-import SQLite from 'react-native-sqlite-storage';
 
 // Função para salvar uma foto
 export const savePhoto = async (photo: PhotoModel): Promise<number> => {
   try {
     const db = getDatabase();
     
-    return await db.transaction(async (tx: any) => {
+    return await db.withTransactionAsync(async () => {
       // Inserir foto principal
-      const photoResult = await tx.executeSql(
+      const photoResult = await db.runAsync(
         'INSERT INTO photos (uri, name, timestamp) VALUES (?, ?, ?)',
         [photo.uri, photo.name, photo.timestamp]
       );
       
-      const photoId = photoResult[0].insertId;
+      const photoId = photoResult.lastInsertRowId;
       
       // Inserir metadados
-      await tx.executeSql(
+      await db.runAsync(
         'INSERT INTO photo_metadata (photo_id, width, height, size) VALUES (?, ?, ?, ?)',
         [photoId, photo.metadata.width, photo.metadata.height, photo.metadata.size]
       );
@@ -39,7 +38,7 @@ export const getAllPhotos = async (): Promise<PhotoModel[]> => {
   try {
     const db = getDatabase();
     
-    const result = await db.executeSql(`
+    const result = await db.getAllAsync(`
       SELECT 
         p.id,
         p.uri,
@@ -58,22 +57,18 @@ export const getAllPhotos = async (): Promise<PhotoModel[]> => {
       ORDER BY p.timestamp DESC
     `);
     
-    const photos: PhotoModel[] = [];
-    for (let i = 0; i < result[0].rows.length; i++) {
-      const row = result[0].rows.item(i);
-      photos.push({
-        id: row.id,
-        uri: row.uri,
-        name: row.name,
-        timestamp: row.timestamp,
-        ar_rendered: row.ar_rendered === 1,
-        metadata: {
-          width: row.width || 0,
-          height: row.height || 0,
-          size: row.size || 0,
-        },
-      });
-    }
+    const photos: PhotoModel[] = result.map((row: any) => ({
+      id: row.id,
+      uri: row.uri,
+      name: row.name,
+      timestamp: row.timestamp,
+      ar_rendered: row.ar_rendered === 1,
+      metadata: {
+        width: row.width || 0,
+        height: row.height || 0,
+        size: row.size || 0,
+      },
+    }));
     
     return photos;
   } catch (error) {
@@ -87,7 +82,7 @@ export const getPhotoById = async (id: number): Promise<PhotoModel | null> => {
   try {
     const db = getDatabase();
     
-    const result = await db.executeSql(`
+    const row = await db.getFirstAsync(`
       SELECT 
         p.id,
         p.uri,
@@ -105,13 +100,12 @@ export const getPhotoById = async (id: number): Promise<PhotoModel | null> => {
         WHERE photo_id = ?
       ) ar ON p.id = ar.photo_id
       WHERE p.id = ?
-    `, [id, id]);
+    `, [id, id]) as any;
     
-    if (result[0].rows.length === 0) {
+    if (!row) {
       return null;
     }
     
-    const row = result[0].rows.item(0);
     return {
       id: row.id,
       uri: row.uri,
@@ -135,13 +129,13 @@ export const deletePhoto = async (id: number): Promise<void> => {
   try {
     const db = getDatabase();
     
-    await db.transaction(async (tx: any) => {
+    await db.withTransactionAsync(async () => {
       // Obter nome da foto para log
-      const photoResult = await tx.executeSql('SELECT name FROM photos WHERE id = ?', [id]);
-      const photoName = photoResult[0].rows.length > 0 ? photoResult[0].rows.item(0).name : 'Desconhecida';
+      const photoResult = await db.getFirstAsync('SELECT name FROM photos WHERE id = ?', [id]) as any;
+      const photoName = photoResult ? photoResult.name : 'Desconhecida';
       
       // Deletar foto (cascade irá deletar registros relacionados)
-      await tx.executeSql('DELETE FROM photos WHERE id = ?', [id]);
+      await db.runAsync('DELETE FROM photos WHERE id = ?', [id]);
       
       // Log da atividade
       await logActivity(1, 'PHOTO_DELETED', `Foto deletada: ${photoName}`);
@@ -163,21 +157,21 @@ export const updatePhotoARStatus = async (photoId: number, rendered: boolean): P
       // Criar sessão AR se não existir
       let sessionId = 1;
       
-      const sessionResult = await db.executeSql(
+      const sessionResult = await db.getFirstAsync(
         'SELECT id FROM ar_sessions WHERE user_id = 1 ORDER BY created_at DESC LIMIT 1'
-      );
+      ) as any;
       
-      if (sessionResult[0].rows.length === 0) {
-        const newSessionResult = await db.executeSql(
+      if (!sessionResult) {
+        const newSessionResult = await db.runAsync(
           'INSERT INTO ar_sessions (user_id) VALUES (1)'
         );
-        sessionId = newSessionResult[0].insertId;
+        sessionId = newSessionResult.lastInsertRowId;
       } else {
-        sessionId = sessionResult[0].rows.item(0).id;
+        sessionId = sessionResult.id;
       }
       
       // Inserir renderização AR
-      await db.executeSql(
+      await db.runAsync(
         'INSERT OR IGNORE INTO ar_renders (session_id, photo_id) VALUES (?, ?)',
         [sessionId, photoId]
       );
@@ -198,7 +192,7 @@ export const addPhotoTag = async (photoId: number, tagName: string): Promise<voi
   try {
     const db = getDatabase();
     
-    await db.executeSql(
+    await db.runAsync(
       'INSERT OR IGNORE INTO photo_tags (photo_id, tag_name) VALUES (?, ?)',
       [photoId, tagName.toLowerCase().trim()]
     );
@@ -218,17 +212,12 @@ export const getPhotoTags = async (photoId: number): Promise<string[]> => {
   try {
     const db = getDatabase();
     
-    const result = await db.executeSql(
+    const result = await db.getAllAsync(
       'SELECT tag_name FROM photo_tags WHERE photo_id = ? ORDER BY tag_name',
       [photoId]
     );
     
-    const tags: string[] = [];
-    for (let i = 0; i < result[0].rows.length; i++) {
-      tags.push(result[0].rows.item(i).tag_name);
-    }
-    
-    return tags;
+    return result.map((row: any) => row.tag_name);
   } catch (error) {
     console.error('Erro ao obter tags da foto:', error);
     throw error;
@@ -240,7 +229,7 @@ export const searchPhotosByTag = async (tagName: string): Promise<PhotoModel[]> 
   try {
     const db = getDatabase();
     
-    const result = await db.executeSql(`
+    const result = await db.getAllAsync(`
       SELECT DISTINCT
         p.id,
         p.uri,
@@ -261,22 +250,18 @@ export const searchPhotosByTag = async (tagName: string): Promise<PhotoModel[]> 
       ORDER BY p.timestamp DESC
     `, [`%${tagName.toLowerCase().trim()}%`]);
     
-    const photos: PhotoModel[] = [];
-    for (let i = 0; i < result[0].rows.length; i++) {
-      const row = result[0].rows.item(i);
-      photos.push({
-        id: row.id,
-        uri: row.uri,
-        name: row.name,
-        timestamp: row.timestamp,
-        ar_rendered: row.ar_rendered === 1,
-        metadata: {
-          width: row.width || 0,
-          height: row.height || 0,
-          size: row.size || 0,
-        },
-      });
-    }
+    const photos: PhotoModel[] = result.map((row: any) => ({
+      id: row.id,
+      uri: row.uri,
+      name: row.name,
+      timestamp: row.timestamp,
+      ar_rendered: row.ar_rendered === 1,
+      metadata: {
+        width: row.width || 0,
+        height: row.height || 0,
+        size: row.size || 0,
+      },
+    }));
     
     return photos;
   } catch (error) {
@@ -290,7 +275,7 @@ export const getRenderedPhotos = async (): Promise<PhotoModel[]> => {
   try {
     const db = getDatabase();
     
-    const result = await db.executeSql(`
+    const result = await db.getAllAsync(`
       SELECT 
         p.id,
         p.uri,
@@ -306,22 +291,18 @@ export const getRenderedPhotos = async (): Promise<PhotoModel[]> => {
       ORDER BY ar.rendered_at DESC
     `);
     
-    const photos: PhotoModel[] = [];
-    for (let i = 0; i < result[0].rows.length; i++) {
-      const row = result[0].rows.item(i);
-      photos.push({
-        id: row.id,
-        uri: row.uri,
-        name: row.name,
-        timestamp: row.timestamp,
-        ar_rendered: true,
-        metadata: {
-          width: row.width || 0,
-          height: row.height || 0,
-          size: row.size || 0,
-        },
-      });
-    }
+    const photos: PhotoModel[] = result.map((row: any) => ({
+      id: row.id,
+      uri: row.uri,
+      name: row.name,
+      timestamp: row.timestamp,
+      ar_rendered: true,
+      metadata: {
+        width: row.width || 0,
+        height: row.height || 0,
+        size: row.size || 0,
+      },
+    }));
     
     return photos;
   } catch (error) {
