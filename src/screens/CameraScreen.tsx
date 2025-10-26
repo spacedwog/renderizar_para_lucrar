@@ -9,13 +9,8 @@ import {
   Image,
   ScrollView,
 } from 'react-native';
-import {
-  launchImageLibrary,
-  launchCamera,
-  MediaType,
-} from 'react-native-image-picker';
-import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import * as ImagePicker from 'expo-image-picker';
+import {Ionicons} from '@expo/vector-icons';
 import {PhotoModel} from '../models/PhotoModel';
 import {savePhoto} from '../database/PhotoRepository';
 
@@ -23,14 +18,10 @@ const CameraScreen = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const requestCameraPermission = useCallback(async () => {
-    const result = await request(PERMISSIONS.ANDROID.CAMERA);
-    return result === RESULTS.GRANTED;
-  }, []);
-
   const handleTakePhoto = useCallback(async () => {
-    const hasPermission = await requestCameraPermission();
-    if (!hasPermission) {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
       Alert.alert(
         'Permissão negada',
         'É necessário conceder permissão para usar a câmera'
@@ -38,41 +29,39 @@ const CameraScreen = () => {
       return;
     }
 
-    const options = {
-      mediaType: 'photo' as MediaType,
-      quality: 0.8 as any,
-      includeBase64: false,
-    };
-
-    launchCamera(options, (response: any) => {
-      if (response.didCancel || response.errorMessage) {
-        return;
-      }
-
-      if (response.assets && response.assets[0]) {
-        const asset = response.assets[0];
-        setSelectedPhoto(asset.uri || null);
-      }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
     });
-  }, [requestCameraPermission]);
 
-  const openGallery = useCallback(() => {
-    const options = {
-      mediaType: 'photo' as MediaType,
-      quality: 0.8 as any,
-      includeBase64: false,
-    };
+    if (!result.canceled && result.assets[0]) {
+      setSelectedPhoto(result.assets[0].uri);
+    }
+  }, []);
 
-    launchImageLibrary(options, (response: any) => {
-      if (response.didCancel || response.errorMessage) {
-        return;
-      }
+  const openGallery = useCallback(async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert(
+        'Permissão negada',
+        'É necessário conceder permissão para acessar a galeria'
+      );
+      return;
+    }
 
-      if (response.assets && response.assets[0]) {
-        const asset = response.assets[0];
-        setSelectedPhoto(asset.uri || null);
-      }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
     });
+
+    if (!result.canceled && result.assets[0]) {
+      setSelectedPhoto(result.assets[0].uri);
+    }
   }, []);
 
   const handleSavePhoto = useCallback(async () => {
@@ -133,7 +122,7 @@ const CameraScreen = () => {
                 style={[styles.actionButton, styles.saveButton]}
                 onPress={handleSavePhoto}
                 disabled={isLoading}>
-                <Icon name="save" size={20} color="#ffffff" />
+                <Ionicons name="save" size={20} color="#ffffff" />
                 <Text style={styles.actionButtonText}>
                   {isLoading ? 'Salvando...' : 'Salvar'}
                 </Text>
@@ -141,7 +130,7 @@ const CameraScreen = () => {
               <TouchableOpacity
                 style={[styles.actionButton, styles.clearButton]}
                 onPress={handleClearPhoto}>
-                <Icon name="clear" size={20} color="#ffffff" />
+                <Ionicons name="close" size={20} color="#ffffff" />
                 <Text style={styles.actionButtonText}>Limpar</Text>
               </TouchableOpacity>
             </View>
@@ -149,7 +138,7 @@ const CameraScreen = () => {
         ) : (
           <View style={styles.cameraContainer}>
             <View style={styles.cameraPlaceholder}>
-              <Icon name="photo-camera" size={64} color="#9ca3af" />
+              <Ionicons name="camera" size={64} color="#9ca3af" />
               <Text style={styles.placeholderText}>
                 Nenhuma foto selecionada
               </Text>
@@ -161,14 +150,14 @@ const CameraScreen = () => {
           <TouchableOpacity
             style={[styles.captureButton, styles.cameraButton]}
             onPress={handleTakePhoto}>
-            <Icon name="camera-alt" size={24} color="#ffffff" />
+            <Ionicons name="camera" size={24} color="#ffffff" />
             <Text style={styles.captureButtonText}>Tirar Foto</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.captureButton, styles.galleryButton]}
             onPress={openGallery}>
-            <Icon name="photo-library" size={24} color="#ffffff" />
+            <Ionicons name="images" size={24} color="#ffffff" />
             <Text style={styles.captureButtonText}>Galeria</Text>
           </TouchableOpacity>
         </View>

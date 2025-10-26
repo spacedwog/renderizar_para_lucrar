@@ -11,7 +11,7 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {Ionicons} from '@expo/vector-icons';
 import {PhotoModel} from '../models/PhotoModel';
 import {getAllPhotos, deletePhoto} from '../database/PhotoRepository';
 
@@ -87,8 +87,8 @@ const GalleryScreen = () => {
             {item.name}
           </Text>
           <View style={styles.statusIndicator}>
-            <Icon 
-              name={item.ar_rendered ? "check-circle" : "radio-button-unchecked"} 
+            <Ionicons 
+              name={item.ar_rendered ? "checkmark-circle" : "ellipse-outline"} 
               size={12} 
               color={item.ar_rendered ? "#10b981" : "#ffffff"} 
             />
@@ -117,7 +117,7 @@ const GalleryScreen = () => {
               <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={handleCloseModal}>
-                <Icon name="close" size={24} color="#ffffff" />
+                <Ionicons name="close" size={24} color="#ffffff" />
               </TouchableOpacity>
             </View>
 
@@ -125,7 +125,7 @@ const GalleryScreen = () => {
 
             <View style={styles.modalInfo}>
               <View style={styles.infoRow}>
-                <Icon name="schedule" size={16} color="#6b7280" />
+                <Ionicons name="time" size={16} color="#6b7280" />
                 <Text style={styles.infoText}>
                   {new Date(selectedPhoto.timestamp).toLocaleDateString('pt-BR', {
                     day: '2-digit',
@@ -137,8 +137,8 @@ const GalleryScreen = () => {
                 </Text>
               </View>
               <View style={styles.infoRow}>
-                <Icon 
-                  name={selectedPhoto.ar_rendered ? "check-circle" : "radio-button-unchecked"} 
+                <Ionicons 
+                  name={selectedPhoto.ar_rendered ? "checkmark-circle" : "ellipse-outline"} 
                   size={16} 
                   color={selectedPhoto.ar_rendered ? "#10b981" : "#6b7280"} 
                 />
@@ -155,7 +155,7 @@ const GalleryScreen = () => {
               <TouchableOpacity
                 style={[styles.actionButton, styles.deleteButton]}
                 onPress={() => handleDeletePhoto(selectedPhoto)}>
-                <Icon name="delete" size={20} color="#ffffff" />
+                <Ionicons name="trash" size={20} color="#ffffff" />
                 <Text style={styles.actionButtonText}>Excluir</Text>
               </TouchableOpacity>
             </View>
@@ -176,12 +176,12 @@ const GalleryScreen = () => {
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <Icon name="hourglass-empty" size={48} color="#6366f1" />
+          <Ionicons name="hourglass" size={48} color="#6366f1" />
           <Text style={styles.loadingText}>Carregando fotos...</Text>
         </View>
       ) : photos.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Icon name="photo-library" size={64} color="#9ca3af" />
+          <Ionicons name="images" size={64} color="#9ca3af" />
           <Text style={styles.emptyTitle}>Nenhuma foto na galeria</Text>
           <Text style={styles.emptySubtitle}>
             Capture algumas fotos para começar

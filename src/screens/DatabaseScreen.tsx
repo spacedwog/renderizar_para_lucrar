@@ -8,7 +8,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {Ionicons} from '@expo/vector-icons';
 import {
   getDatabaseStats,
   clearAllData,
@@ -112,7 +112,7 @@ const DatabaseScreen = () => {
   }> = ({title, value, icon, color}: {title: string; value: string | number; icon: string; color: string}) => (
     <View style={[styles.statCard, {borderLeftColor: color}]}>
       <View style={[styles.statIcon, {backgroundColor: color}]}>
-        <Icon name={icon} size={24} color="#ffffff" />
+        <Ionicons name={icon as any} size={24} color="#ffffff" />
       </View>
       <View style={styles.statContent}>
         <Text style={styles.statValue}>{value}</Text>
@@ -145,7 +145,7 @@ const DatabaseScreen = () => {
       onPress={onPress}
       activeOpacity={0.7}>
       <View style={[styles.actionIcon, {backgroundColor: color}]}>
-        <Icon name={icon} size={24} color="#ffffff" />
+        <Ionicons name={icon as any} size={24} color="#ffffff" />
       </View>
       <View style={styles.actionContent}>
         <Text style={[styles.actionTitle, danger && styles.dangerText]}>
@@ -153,7 +153,7 @@ const DatabaseScreen = () => {
         </Text>
         <Text style={styles.actionSubtitle}>{subtitle}</Text>
       </View>
-      <Icon name="chevron-right" size={24} color="#9ca3af" />
+      <Ionicons name="chevron-forward" size={24} color="#9ca3af" />
     </TouchableOpacity>
   );
 
@@ -169,7 +169,7 @@ const DatabaseScreen = () => {
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <Icon name="hourglass-empty" size={48} color="#6366f1" />
+            <Ionicons name="hourglass" size={48} color="#6366f1" />
             <Text style={styles.loadingText}>Carregando estatísticas...</Text>
           </View>
         ) : (
@@ -180,13 +180,13 @@ const DatabaseScreen = () => {
                 <StatCard
                   title="Total de Fotos"
                   value={stats?.totalPhotos || 0}
-                  icon="photo"
+                  icon="image"
                   color="#6366f1"
                 />
                 <StatCard
                   title="Fotos Renderizadas"
                   value={stats?.renderedPhotos || 0}
-                  icon="3d-rotation"
+                  icon="cube"
                   color="#10b981"
                 />
                 <StatCard
@@ -198,12 +198,12 @@ const DatabaseScreen = () => {
                 <StatCard
                   title="Sessões"
                   value={stats?.totalSessions || 0}
-                  icon="history"
+                  icon="time"
                   color="#f59e0b"
                 />
               </View>
               <View style={styles.databaseInfo}>
-                <Icon name="storage" size={20} color="#6b7280" />
+                <Ionicons name="server" size={20} color="#6b7280" />
                 <Text style={styles.databaseInfoText}>
                   Tamanho do banco: {stats?.databaseSize || 'N/A'}
                 </Text>
@@ -216,7 +216,7 @@ const DatabaseScreen = () => {
               <ActionButton
                 title="Exportar Dados"
                 subtitle="Criar backup do banco de dados"
-                icon="backup"
+                icon="cloud-upload"
                 color="#10b981"
                 onPress={handleExportData}
               />
@@ -224,7 +224,7 @@ const DatabaseScreen = () => {
               <ActionButton
                 title="Importar Dados"
                 subtitle="Restaurar dados de um backup"
-                icon="restore"
+                icon="cloud-download"
                 color="#6366f1"
                 onPress={handleImportData}
               />
@@ -232,7 +232,7 @@ const DatabaseScreen = () => {
               <ActionButton
                 title="Limpar Dados"
                 subtitle="Remover todos os dados (irreversível)"
-                icon="delete-forever"
+                icon="trash"
                 color="#ef4444"
                 onPress={handleClearData}
                 danger

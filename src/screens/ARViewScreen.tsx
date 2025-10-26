@@ -9,7 +9,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {Ionicons} from '@expo/vector-icons';
 import {PhotoModel} from '../models/PhotoModel';
 import {getAllPhotos, updatePhotoARStatus} from '../database/PhotoRepository';
 import ARPhotoRenderer from '../components/ARPhotoRenderer';
@@ -68,15 +68,15 @@ const ARViewScreen = () => {
       onPress={() => handlePhotoSelect(item)}
       activeOpacity={0.7}>
       <View style={styles.photoInfo}>
-        <Icon name="photo" size={40} color="#6366f1" />
+        <Ionicons name="image" size={40} color="#6366f1" />
         <View style={styles.photoDetails}>
           <Text style={styles.photoName}>{item.name}</Text>
           <Text style={styles.photoTimestamp}>
             {new Date(item.timestamp).toLocaleDateString('pt-BR')}
           </Text>
           <View style={styles.statusContainer}>
-            <Icon 
-              name={item.ar_rendered ? "check-circle" : "radio-button-unchecked"} 
+            <Ionicons 
+              name={item.ar_rendered ? "checkmark-circle" : "ellipse-outline"} 
               size={16} 
               color={item.ar_rendered ? "#10b981" : "#9ca3af"} 
             />
@@ -89,7 +89,7 @@ const ARViewScreen = () => {
           </View>
         </View>
       </View>
-      <Icon name="3d-rotation" size={24} color="#8b5cf6" />
+      <Ionicons name="cube" size={24} color="#8b5cf6" />
     </TouchableOpacity>
   ), [handlePhotoSelect]);
 
@@ -113,12 +113,12 @@ const ARViewScreen = () => {
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <Icon name="hourglass-empty" size={48} color="#6366f1" />
+          <Ionicons name="hourglass" size={48} color="#6366f1" />
           <Text style={styles.loadingText}>Carregando fotos...</Text>
         </View>
       ) : photos.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Icon name="photo-library" size={64} color="#9ca3af" />
+          <Ionicons name="images" size={64} color="#9ca3af" />
           <Text style={styles.emptyTitle}>Nenhuma foto encontrada</Text>
           <Text style={styles.emptySubtitle}>
             Capture algumas fotos primeiro para visualizar em AR
@@ -135,7 +135,7 @@ const ARViewScreen = () => {
       )}
 
       <View style={styles.infoContainer}>
-        <Icon name="info" size={20} color="#6366f1" />
+        <Ionicons name="information-circle" size={20} color="#6366f1" />
         <Text style={styles.infoText}>
           Toque em uma foto para visualizar em realidade aumentada
         </Text>

@@ -9,7 +9,7 @@ import {
   Animated,
   PanResponder,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {Ionicons} from '@expo/vector-icons';
 import {PhotoModel} from '../models/PhotoModel';
 
 const {width, height} = Dimensions.get('window');
@@ -124,7 +124,7 @@ const ARPhotoRenderer = ({photo, onClose}: ARPhotoRendererProps) => {
   const renderLoadingScreen = () => (
     <View style={styles.loadingContainer}>
       <View style={styles.loadingContent}>
-        <Icon name="3d-rotation" size={64} color="#6366f1" />
+        <Ionicons name="cube" size={64} color="#6366f1" />
         <Text style={styles.loadingTitle}>Processando AR</Text>
         <Text style={styles.loadingSubtitle}>
           Preparando renderização 3D da imagem...
@@ -166,7 +166,7 @@ const ARPhotoRenderer = ({photo, onClose}: ARPhotoRendererProps) => {
           </Text>
           {renderMode === 'AR' && (
             <View style={styles.arOverlay}>
-              <Icon name="camera-enhance" size={32} color="#ffffff" />
+              <Ionicons name="camera" size={32} color="#ffffff" />
               <Text style={styles.arText}>AR ATIVO</Text>
             </View>
           )}
@@ -180,11 +180,11 @@ const ARPhotoRenderer = ({photo, onClose}: ARPhotoRendererProps) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Icon name="close" size={24} color="#ffffff" />
+          <Ionicons name="close" size={24} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{photo.name}</Text>
         <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-          <Icon name="refresh" size={24} color="#ffffff" />
+          <Ionicons name="refresh" size={24} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
@@ -220,19 +220,19 @@ const ARPhotoRenderer = ({photo, onClose}: ARPhotoRendererProps) => {
             <TouchableOpacity
               style={styles.zoomButton}
               onPress={() => handleZoom(false)}>
-              <Icon name="zoom-out" size={24} color="#ffffff" />
+              <Ionicons name="remove" size={24} color="#ffffff" />
             </TouchableOpacity>
             <Text style={styles.scaleText}>{Math.round(scale * 100)}%</Text>
             <TouchableOpacity
               style={styles.zoomButton}
               onPress={() => handleZoom(true)}>
-              <Icon name="zoom-in" size={24} color="#ffffff" />
+              <Ionicons name="add" size={24} color="#ffffff" />
             </TouchableOpacity>
           </View>
 
           {/* Informações */}
           <View style={styles.infoContainer}>
-            <Icon name="info" size={16} color="#9ca3af" />
+            <Ionicons name="information-circle" size={16} color="#9ca3af" />
             <Text style={styles.infoText}>
               {renderMode === '2D' && 'Modo 2D - Visualização normal'}
               {renderMode === '3D' && 'Modo 3D - Arraste para rotacionar'}

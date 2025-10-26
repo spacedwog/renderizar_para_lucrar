@@ -25,7 +25,9 @@ jest.mock('react-native-fs', () => ({
   stat: jest.fn(() => Promise.resolve({ size: 1024 })),
 }));
 
-jest.mock('react-native-vector-icons/MaterialIcons', () => 'Icon');
+jest.mock('@expo/vector-icons', () => ({
+  Ionicons: 'Ionicons',
+}));
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
