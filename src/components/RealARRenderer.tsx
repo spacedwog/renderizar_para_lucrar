@@ -46,46 +46,133 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
 
   // Recarregar textura quando entrar nos modos 3D ou AR
   useEffect(() => {
-    if ((isARActive || is3DMode) && materialRef && !photoTexture) {
-      console.log('🔄 Recarregando textura para modo 3D/AR');
+    if ((isARActive || is3DMode) && materialRef) {
+      console.log('🔄 Carregando textura para modo 3D/AR');
+      console.log('📊 Estado atual:', { isARActive, is3DMode, hasMaterial: !!materialRef, hasTexture: !!photoTexture });
       loadPhotoTexture();
     }
-  }, [isARActive, is3DMode, materialRef, photoTexture]);
+  }, [isARActive, is3DMode, materialRef]);
+  
+  // Forçar recarregamento quando a foto muda
+  useEffect(() => {
+    if (materialRef && (isARActive || is3DMode)) {
+      console.log('🔄 Nova foto detectada, recarregando textura');
+      setPhotoTexture(null); // Reset da textura
+      loadPhotoTexture();
+    }
+  }, [photo.uri, materialRef]);
 
-  // Função para carregar textura da foto
-  const loadPhotoTexture = () => {
-    if (!photo.uri) return null;
+  // Função para carregar textura da foto com fallback
+  const loadPhotoTexture = async () => {
+    if (!photo.uri) {
+      console.warn('⚠️ URI da foto não encontrada');
+      return null;
+    }
     
-    const loader = new THREE.TextureLoader();
-    loader.crossOrigin = 'anonymous';
-    
-    return loader.load(
-      photo.uri,
-      (loadedTexture) => {
-        console.log('✅ Textura carregada com sucesso:', photo.uri);
-        loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
-        loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
-        loadedTexture.minFilter = THREE.LinearFilter;
-        loadedTexture.magFilter = THREE.LinearFilter;
-        loadedTexture.flipY = false; // Importante para texturas de foto
-        
-        setPhotoTexture(loadedTexture);
-        
-        // Atualizar material existente
-        if (materialRef) {
-          materialRef.map = loadedTexture;
-          materialRef.needsUpdate = true;
-          console.log('🔄 Material atualizado com nova textura');
-        }
-      },
-      (progress) => {
-        console.log('⏳ Carregando textura...', progress);
-      },
-      (error) => {
-        console.error('❌ Erro ao carregar textura:', error);
-        console.log('📍 URI da foto:', photo.uri);
+    try {
+      console.log('📎 Tentando carregar imagem:', photo.uri);
+      
+      // Método 1: Tentar carregar via THREE.TextureLoader (funciona melhor para web)
+      const loader = new THREE.TextureLoader();
+      
+      return new Promise((resolve, reject) => {
+        loader.load(
+          photo.uri,
+          (loadedTexture) => {
+            console.log('✅ Textura THREE.js carregada:', photo.uri);
+            
+            // Configurar textura
+            loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
+            loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
+            loadedTexture.minFilter = THREE.LinearFilter;
+            loadedTexture.magFilter = THREE.LinearFilter;
+            loadedTexture.flipY = false;
+            
+            setPhotoTexture(loadedTexture);
+            
+            // Atualizar material existente
+            if (materialRef) {
+              materialRef.map = loadedTexture;
+              materialRef.needsUpdate = true;
+              console.log('🔄 Material atualizado com textura THREE.js');
+            }
+            
+            resolve(loadedTexture);
+          },
+          (progress) => {
+            console.log('⏳ Progresso do carregamento:', progress);
+          },
+          (error) => {
+            console.warn('⚠️ Falha no THREE.TextureLoader, tentando método alternativo:', error);
+            
+            // Método 2: Fallback usando canvas (melhor para mobile/Expo)
+            loadTextureViaCanvas()
+              .then(resolve)
+              .catch(reject);
+          }
+        );
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro geral no carregamento de textura:', error);
+      return null;
+    }
+  };
+  
+  // Método alternativo para dispositivos móveis - fallback simples
+  const loadTextureViaCanvas = () => {
+    return new Promise((resolve, reject) => {
+      console.log('⚠️ Tentando método de fallback para mobile');
+      
+      // Para React Native/Expo, usar uma cor como fallback
+      // e mostrar a imagem real apenas no modo 2D
+      const canvas = document.createElement ? document.createElement('canvas') : null;
+      
+      if (!canvas) {
+        console.log('� Ambiente React Native detectado, usando fallback de cor');
+        reject(new Error('Canvas não disponível em React Native'));
+        return;
       }
-    );
+      
+      // Se chegou aqui, provavelmente é web
+      try {
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Contexto 2D não disponível'));
+          return;
+        }
+        
+        // Criar textura simples colorida como fallback
+        canvas.width = 256;
+        canvas.height = 256;
+        ctx.fillStyle = '#6366f1';
+        ctx.fillRect(0, 0, 256, 256);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Foto', 128, 128);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        
+        setPhotoTexture(texture);
+        
+        if (materialRef) {
+          materialRef.map = texture;
+          materialRef.needsUpdate = true;
+          console.log('✅ Material atualizado com fallback');
+        }
+        
+        resolve(texture);
+        
+      } catch (error) {
+        console.error('❌ Erro no fallback canvas:', error);
+        reject(error);
+      }
+    });
   };
   
   const rendererRef = useRef<any>(null);
@@ -180,12 +267,14 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
       // Armazenar referência do material
       setMaterialRef(material);
       
-      // Carregar textura da foto
-      const texture = loadPhotoTexture();
-      if (texture) {
-        material.map = texture;
-        console.log('🖼️ Textura aplicada ao material');
-      }
+      // Carregar textura da foto de forma assíncrona
+      loadPhotoTexture().then((texture) => {
+        if (texture && materialRef) {
+          console.log('🖼️ Aplicando textura carregada ao material');
+        }
+      }).catch((error) => {
+        console.log('⚠️ Usando material sem textura:', error.message);
+      });
 
       // Criar mesh
       const photoMesh = new THREE.Mesh(geometry, material);
@@ -298,7 +387,23 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
             source={{ uri: photo.uri }}
             style={styles.photoImage}
             resizeMode="contain"
+            onLoad={() => {
+              console.log('✅ Imagem 2D carregada com sucesso:', photo.uri);
+            }}
+            onError={(error) => {
+              console.error('❌ Erro ao carregar imagem 2D:', error);
+              console.log('📍 URI problemática:', photo.uri);
+            }}
           />
+          
+          {/* Debug info */}
+          <View style={styles.debugContainer}>
+            <Text style={styles.debugText}>Modo: 2D</Text>
+            <Text style={styles.debugText}>Foto: {photo.name}</Text>
+            <Text style={styles.debugText} numberOfLines={2}>
+              URI: {photo.uri.substring(0, 50)}...
+            </Text>
+          </View>
         </View>
       )}
 
@@ -441,6 +546,21 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     height: height * 0.6,
     borderRadius: 12,
+  },
+  debugContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 10,
+    borderRadius: 8,
+  },
+  debugText: {
+    color: '#ffffff',
+    fontSize: 12,
+    marginBottom: 2,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   header: {
     position: 'absolute',
