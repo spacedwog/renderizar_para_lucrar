@@ -1,5 +1,8 @@
 import * as SQLite from 'expo-sqlite';
 import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import {PhotoModel} from '../models/PhotoModel';
+import LogManager from '../utils/LogManager';
 
 const DATABASE_NAME = 'RenderizarParaLucrarDB.db';
 
@@ -125,7 +128,7 @@ export const initializeDatabase = async (): Promise<void> => {
 export const closeDatabase = async (): Promise<void> => {
   if (database) {
     await database.closeAsync();
-    console.log('Banco de dados fechado');
+    LogManager.info('Banco de dados fechado');
   }
 };
 

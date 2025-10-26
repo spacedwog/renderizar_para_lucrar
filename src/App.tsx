@@ -4,7 +4,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import {StyleSheet} from 'react-native';
 import {StatusBar} from 'expo-status-bar';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Import screens
 import HomeScreen from './screens/HomeScreen';
@@ -65,7 +65,7 @@ const App = () => {
             options={{title: 'Banco de Dados'}}
           />
         </Stack.Navigator>
-        </NavigationContainer>
+      </NavigationContainer>
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );

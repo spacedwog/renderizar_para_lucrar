@@ -1,39 +1,72 @@
 /**
- * Gerenciador de logs para filtrar avisos desnecessários
+ * LogManager - Controla logs de desenvolvimento
+ * Em produção, pode ser configurado para desabilitar logs
  */
 
-// Suprimir avisos específicos conhecidos
-const SUPPRESS_WARNINGS = [
-  'The package.*three.*contains an invalid package.json configuration',
-  'SafeAreaView has been deprecated',
-  'EXGL: gl.pixelStorei\\(\\) doesn\'t support this parameter yet!'
-];
+interface LogConfig {
+  enabled: boolean;
+  level: 'debug' | 'info' | 'warn' | 'error';
+}
 
-// Função para filtrar logs
-export const filterLogs = () => {
-  // Capturar console.warn original
-  const originalWarn = console.warn;
-  
-  console.warn = (...args: any[]) => {
-    const message = args.join(' ');
-    
-    // Verificar se é um aviso que deve ser suprimido
-    const shouldSuppress = SUPPRESS_WARNINGS.some(pattern => 
-      new RegExp(pattern, 'i').test(message)
-    );
-    
-    if (!shouldSuppress) {
-      originalWarn.apply(console, args);
-    }
+class LogManager {
+  private static config: LogConfig = {
+    enabled: __DEV__, // Apenas em desenvolvimento
+    level: 'info'
   };
-};
 
-// Função para restaurar logs originais
-export const restoreLogs = () => {
-  // Esta função pode ser expandida se necessário no futuro
-};
+  static setConfig(config: Partial<LogConfig>) {
+    this.config = { ...this.config, ...config };
+  }
 
-export default {
-  filterLogs,
-  restoreLogs
-};
+  static debug(message: string, ...args: any[]) {
+    if (this.config.enabled && this.shouldLog('debug')) {
+      console.log(`🔧 ${message}`, ...args);
+    }
+  }
+
+  static info(message: string, ...args: any[]) {
+    if (this.config.enabled && this.shouldLog('info')) {
+      console.log(`ℹ️ ${message}`, ...args);
+    }
+  }
+
+  static warn(message: string, ...args: any[]) {
+    if (this.config.enabled && this.shouldLog('warn')) {
+      console.warn(`⚠️ ${message}`, ...args);
+    }
+  }
+
+  static error(message: string, ...args: any[]) {
+    if (this.config.enabled && this.shouldLog('error')) {
+      console.error(`❌ ${message}`, ...args);
+    }
+  }
+
+  static success(message: string, ...args: any[]) {
+    if (this.config.enabled) {
+      console.log(`✅ ${message}`, ...args);
+    }
+  }
+
+  // Método para logs críticos que sempre aparecem (mesmo em produção)
+  static critical(message: string, ...args: any[]) {
+    console.error(`🚨 CRITICAL: ${message}`, ...args);
+  }
+
+  private static shouldLog(level: LogConfig['level']): boolean {
+    const levels = { debug: 0, info: 1, warn: 2, error: 3 };
+    return levels[level] >= levels[this.config.level];
+  }
+
+  // Para produção - desabilita todos os logs
+  static disableAll() {
+    this.config.enabled = false;
+  }
+
+  // Para desenvolvimento - habilita logs
+  static enableAll() {
+    this.config.enabled = true;
+  }
+}
+
+export default LogManager;

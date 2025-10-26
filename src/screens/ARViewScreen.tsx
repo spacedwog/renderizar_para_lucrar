@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   FlatList,
   Alert,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import {PhotoModel} from '../models/PhotoModel';
 import {getAllPhotos, updatePhotoARStatus} from '../database/PhotoRepository';

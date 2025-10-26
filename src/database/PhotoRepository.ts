@@ -1,5 +1,6 @@
 import {PhotoModel, PhotoMetadata} from '../models/PhotoModel';
 import {getDatabase, logActivity} from './DatabaseManager';
+import LogManager from '../utils/LogManager';
 
 // Função para salvar uma foto
 export const savePhoto = async (photo: PhotoModel): Promise<number> => {
@@ -24,7 +25,7 @@ export const savePhoto = async (photo: PhotoModel): Promise<number> => {
       // Log da atividade
       await logActivity(1, 'PHOTO_SAVED', `Foto salva: ${photo.name}`);
       
-      console.log('Foto salva com sucesso:', photoId);
+      LogManager.success('Foto salva com sucesso:', photoId);
       return photoId;
     });
   } catch (error) {

@@ -18,6 +18,7 @@ import * as Sensors from 'expo-sensors';
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system';
 import { PhotoModel } from '../models/PhotoModel';
+import LogManager from '../utils/LogManager';
 
 const { width, height } = Dimensions.get('window');
 
@@ -34,21 +35,19 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
   const [photoTexture, setPhotoTexture] = useState<THREE.Texture | null>(null);
   const [materialRef, setMaterialRef] = useState<THREE.MeshBasicMaterial | null>(null);
   
-  // Debug: Log da foto recebida
+  // Debug: Log da foto recebida (apenas em desenvolvimento)
   useEffect(() => {
-    console.log('RealARRenderer - Foto recebida:', {
+    LogManager.debug('RealARRenderer - Foto recebida', {
       id: photo.id,
       name: photo.name,
-      uri: photo.uri,
-      timestamp: photo.timestamp
+      uri: photo.uri
     });
   }, [photo]);
 
   // Recarregar textura quando entrar nos modos 3D ou AR
   useEffect(() => {
     if ((isARActive || is3DMode) && materialRef) {
-      console.log('🔄 Carregando textura para modo 3D/AR');
-      console.log('📊 Estado atual:', { isARActive, is3DMode, hasMaterial: !!materialRef, hasTexture: !!photoTexture });
+      LogManager.debug('Carregando textura para modo 3D/AR');
       loadPhotoTexture();
     }
   }, [isARActive, is3DMode, materialRef]);
@@ -56,7 +55,7 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
   // Forçar recarregamento quando a foto muda
   useEffect(() => {
     if (materialRef && (isARActive || is3DMode)) {
-      console.log('🔄 Nova foto detectada, recarregando textura');
+      LogManager.debug('Nova foto detectada, recarregando textura');
       setPhotoTexture(null); // Reset da textura
       loadPhotoTexture();
     }
@@ -70,11 +69,11 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
     }
     
     try {
-      console.log('📎 Carregando imagem para Expo/React Native:', photo.uri);
+      LogManager.debug('Carregando imagem para Expo/React Native');
       
       // Para Expo/React Native, usar uma abordagem alternativa mais compatível
       // Criar textura de fallback imediatamente e tentar carregar em paralelo
-      console.log('🎨 Criando textura de fallback enquanto tenta carregar imagem real...');
+      LogManager.debug('Criando textura de fallback...');
       const fallbackTexture = createFallbackTexture();
       setPhotoTexture(fallbackTexture);
       
@@ -82,34 +81,33 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
       return new Promise<THREE.Texture>((resolve, reject) => {
         // No Expo/React Native, THREE.TextureLoader pode não funcionar com file:// URIs
         // Usar fallback imediatamente e indicar sucesso nos logs
-        console.log('⚠️ THREE.TextureLoader não compatível com file:// no Expo/React Native');
-        console.log('📱 Usando textura de fallback para modo 3D/AR');
-        console.log('✅ Textura de fallback aplicada com sucesso!');
+        LogManager.debug('THREE.TextureLoader não compatível com file:// no Expo/React Native');
+        LogManager.debug('Usando textura de fallback para modo 3D/AR');
         
         // Atualizar material existente
         if (materialRef) {
           materialRef.map = fallbackTexture;
           materialRef.needsUpdate = true;
-          console.log('🎆 Material atualizado com textura de fallback!');
+          LogManager.debug('Material atualizado com textura de fallback');
         }
         
         resolve(fallbackTexture);
       });
       
     } catch (error) {
-      console.error('❌ Erro na função loadPhotoTexture:', error);
+      LogManager.error('Erro na função loadPhotoTexture:', error);
       return createFallbackTexture();
     }
   };
   
   // Criar textura de fallback com cor e texto
   const createFallbackTexture = (): THREE.Texture => {
-    console.log('🎨 Criando textura de fallback...');
+    LogManager.debug('Criando textura de fallback');
     
     try {
       // Para React Native/Expo, usar textura de dados diretamente
       // pois canvas pode não estar disponível ou ter APIs limitadas
-      console.log('🟢 Criando textura de dados para React Native/Expo');
+      LogManager.debug('Criando textura de dados para React Native/Expo');
       
       // Criar uma textura colorida simples (cor azul-violeta)
       const size = 64; // Menor para performance
@@ -127,10 +125,8 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
       const texture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
       texture.wrapS = THREE.ClampToEdgeWrapping;
       texture.wrapT = THREE.ClampToEdgeWrapping;
-      texture.minFilter = THREE.NearestFilter; // Usar NearestFilter para evitar avisos EXGL
-      texture.magFilter = THREE.NearestFilter; // Usar NearestFilter para evitar avisos EXGL
-      texture.generateMipmaps = false; // Desabilitar mipmaps para Expo GL
-      texture.flipY = false; // Configuração específica para Expo GL
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
       texture.needsUpdate = true;
       
       setPhotoTexture(texture);
@@ -138,13 +134,13 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
       if (materialRef) {
         materialRef.map = texture;
         materialRef.needsUpdate = true;
-        console.log('✅ Fallback aplicado ao material');
+        LogManager.debug('Fallback aplicado ao material');
       }
       
       return texture;
       
     } catch (error) {
-      console.error('❌ Erro ao criar fallback:', error);
+      LogManager.error('Erro ao criar fallback:', error);
       // Mesmo em caso de erro, retornar uma textura básica
       const data = new Uint8Array([255, 0, 0, 255]); // Cor vermelha para indicar erro
       const errorTexture = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat);
@@ -156,14 +152,14 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
   // Método alternativo para dispositivos móveis - fallback simples
   const loadTextureViaCanvas = () => {
     return new Promise((resolve, reject) => {
-      console.log('⚠️ Tentando método de fallback para mobile');
+      LogManager.debug('Tentando método de fallback para mobile');
       
       // Para React Native/Expo, usar uma cor como fallback
       // e mostrar a imagem real apenas no modo 2D
       const canvas = document.createElement ? document.createElement('canvas') : null;
       
       if (!canvas) {
-        console.log('� Ambiente React Native detectado, usando fallback de cor');
+        LogManager.debug('Ambiente React Native detectado, usando fallback de cor');
         reject(new Error('Canvas não disponível em React Native'));
         return;
       }
@@ -197,7 +193,7 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
         if (materialRef) {
           materialRef.map = texture;
           materialRef.needsUpdate = true;
-          console.log('✅ Material atualizado com fallback');
+          LogManager.debug('Material atualizado com fallback');
         }
         
         resolve(texture);
@@ -355,7 +351,7 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
     }
 
     const newARMode = !isARActive;
-    console.log('🥽 Alterando para modo AR:', newARMode);
+    LogManager.info('Modo AR alterado:', newARMode);
     setIsARActive(newARMode);
     
     if (newARMode) {
@@ -369,7 +365,7 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
 
   const toggle3DMode = () => {
     const newMode = !is3DMode;
-    console.log('🎮 Alterando para modo 3D:', newMode);
+    LogManager.info('Modo 3D alterado:', newMode);
     setIs3DMode(newMode);
     setIsARActive(false); // Desativar AR ao entrar no modo 3D
   };
@@ -422,11 +418,11 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
             style={styles.photoImage}
             resizeMode="contain"
             onLoad={() => {
-              console.log('✅ Imagem 2D carregada com sucesso:', photo.uri);
+              LogManager.success('Imagem 2D carregada com sucesso');
             }}
             onError={(error) => {
               console.error('❌ Erro ao carregar imagem 2D:', error);
-              console.log('📍 URI problemática:', photo.uri);
+              LogManager.warn('URI problemática:', photo.uri);
             }}
           />
           
