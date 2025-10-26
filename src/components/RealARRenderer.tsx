@@ -7,6 +7,7 @@ import {
   Dimensions,
   Alert,
   Platform,
+  Image,
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { GLView } from 'expo-gl';
@@ -14,6 +15,8 @@ import { Renderer } from 'expo-three';
 import { Ionicons } from '@expo/vector-icons';
 import * as THREE from 'three';
 import * as Sensors from 'expo-sensors';
+import { Asset } from 'expo-asset';
+import * as FileSystem from 'expo-file-system';
 import { PhotoModel } from '../models/PhotoModel';
 
 const { width, height } = Dimensions.get('window');
@@ -28,6 +31,17 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
   const [isARActive, setIsARActive] = useState(false);
   const [sensorData, setSensorData] = useState<any>(null);
   const [is3DMode, setIs3DMode] = useState(false);
+  const [photoTexture, setPhotoTexture] = useState<THREE.Texture | null>(null);
+  
+  // Debug: Log da foto recebida
+  useEffect(() => {
+    console.log('RealARRenderer - Foto recebida:', {
+      id: photo.id,
+      name: photo.name,
+      uri: photo.uri,
+      timestamp: photo.timestamp
+    });
+  }, [photo]);
   
   const rendererRef = useRef<any>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -107,21 +121,76 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
       camera.position.z = 5;
       cameraRef.current = camera;
 
-      // Criar geometria do cubo/foto
-      const geometry = new THREE.BoxGeometry(2, 2, 0.1);
+      // Criar geometria plana para a foto
+      const geometry = new THREE.PlaneGeometry(3, 3);
       
-      // Criar material com textura (simulando a foto)
-      const material = new THREE.MeshBasicMaterial({
-        color: 0x6366f1,
-        transparent: true,
-        opacity: 0.8,
-      });
+      // Carregar textura da foto
+      let material: THREE.MeshBasicMaterial;
+      
+      try {
+        // Tentar carregar a imagem real
+        if (photo.uri) {
+          const loader = new THREE.TextureLoader();
+          
+          // Configurar loader com headers para URIs locais
+          loader.crossOrigin = 'anonymous';
+          
+          const texture = loader.load(
+            photo.uri,
+            (loadedTexture) => {
+              console.log('Textura carregada com sucesso:', photo.uri);
+              loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
+              loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
+              loadedTexture.minFilter = THREE.LinearFilter;
+              loadedTexture.magFilter = THREE.LinearFilter;
+              setPhotoTexture(loadedTexture);
+              
+              // Atualizar material se o mesh já existir
+              if (cubeRef.current && cubeRef.current.material) {
+                (cubeRef.current.material as THREE.MeshBasicMaterial).map = loadedTexture;
+                (cubeRef.current.material as THREE.MeshBasicMaterial).needsUpdate = true;
+              }
+            },
+            (progress) => {
+              console.log('Carregando textura...', progress);
+            },
+            (error) => {
+              console.warn('Erro ao carregar textura:', error);
+              console.log('URI da foto:', photo.uri);
+            }
+          );
+          
+          material = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide,
+          });
+        } else {
+          // Fallback para cor se não houver imagem
+          material = new THREE.MeshBasicMaterial({
+            color: 0x6366f1,
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide,
+          });
+        }
+      } catch (error) {
+        console.warn('Erro ao criar material:', error);
+        // Fallback para cor
+        material = new THREE.MeshBasicMaterial({
+          color: 0x6366f1,
+          transparent: true,
+          opacity: 0.8,
+          side: THREE.DoubleSide,
+        });
+      }
 
       // Criar mesh
-      const cube = new THREE.Mesh(geometry, material);
-      cube.position.set(0, 0, 0);
-      cubeRef.current = cube;
-      scene.add(cube);
+      const photoMesh = new THREE.Mesh(geometry, material);
+      photoMesh.position.set(0, 0, 0);
+      cubeRef.current = photoMesh;
+      scene.add(photoMesh);
 
       // Adicionar iluminação
       const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
@@ -217,14 +286,27 @@ const RealARRenderer = ({ photo, onClose }: RealARRendererProps) => {
         />
       )}
 
+      {/* Visualização 2D da imagem real */}
+      {!isARActive && !is3DMode && (
+        <View style={styles.imageContainer}>
+          <Image
+            source={{ uri: photo.uri }}
+            style={styles.photoImage}
+            resizeMode="contain"
+          />
+        </View>
+      )}
+
       {/* GLView para renderização 3D/AR */}
-      <GLView
-        style={[
-          styles.glView,
-          { backgroundColor: isARActive ? 'transparent' : '#000000' }
-        ]}
-        onContextCreate={onContextCreate}
-      />
+      {(isARActive || is3DMode) && (
+        <GLView
+          style={[
+            styles.glView,
+            { backgroundColor: isARActive ? 'transparent' : '#000000' }
+          ]}
+          onContextCreate={onContextCreate}
+        />
+      )}
 
       {/* Header */}
       <View style={styles.header}>
@@ -336,6 +418,17 @@ const styles = StyleSheet.create({
   },
   glView: {
     flex: 1,
+  },
+  imageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+  },
+  photoImage: {
+    width: width * 0.9,
+    height: height * 0.6,
+    borderRadius: 12,
   },
   header: {
     position: 'absolute',
