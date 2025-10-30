@@ -15,7 +15,9 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.renderizarparalucrar.app",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
@@ -26,6 +28,6 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "platforms": ["ios", "android"]
+    "platforms": ["ios", "android", "web"]
   }
 }
